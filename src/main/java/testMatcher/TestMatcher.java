@@ -155,15 +155,13 @@ public class TestMatcher {
 	
 	private ArrayList<MatchingMethod> isMatchMethod(ArrayList<TestMethod> testMethodLists, ArrayList<ExtractMethod> extractMethodLists, String testClass, String extractClass){
 		ArrayList<MatchingMethod> matchingMethodLists = new ArrayList<MatchingMethod>();
-		int borderMethodNum = 0;
 		for(int testMethodNum = 0; testMethodNum < testMethodLists.size(); testMethodNum++) {
 			TestMethod testMethod = testMethodLists.get(testMethodNum);
 			
-			for(int extractMethodNum = borderMethodNum; extractMethodNum < extractMethodLists.size(); extractMethodNum++) {
+			for(int extractMethodNum = 0; extractMethodNum < extractMethodLists.size(); extractMethodNum++) {
 				ExtractMethod extractMethod = extractMethodLists.get(extractMethodNum);
 				
 				if(this.isSameExecutePath(testMethod, extractMethod, testClass, extractClass)) {
-					borderMethodNum = extractMethodNum + 1;
 					MatchingMethod matchingMethod = new MatchingMethod(testMethod, extractMethod);
 					matchingMethodLists.add(matchingMethod);
 					break;
