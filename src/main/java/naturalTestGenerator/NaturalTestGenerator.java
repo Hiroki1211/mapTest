@@ -28,7 +28,7 @@ import tracer.ValueOption;
 
 public class NaturalTestGenerator {
 
-	private String executionTestPath = "src/main/java/executionTest/";
+	private String executionTestPath = "src/test/java/executionTest/";
 	private String exportPath = "src/test/java/mapTest/";
 	
 	public void run(ArrayList<ExecutionClass> executionClassLists, ArrayList<Result> resultLists, Analyzer analyzer, ArrayList<ExtractClass> extractClassLists) {
@@ -266,6 +266,7 @@ public class NaturalTestGenerator {
 			for(int importNum = 0; importNum < importLists.size(); importNum++) {
 				contents.add(importLists.get(importNum).getStatement());
 			}
+			contents.add("import java.io.IOException;");
 			
 			contents.add("");
 			contents.add("public class " + executionClass.getClassName() + "_MapTest {");
@@ -276,12 +277,12 @@ public class NaturalTestGenerator {
 				
 				contents.add("");
 				contents.add("  @Test");
-				contents.add("  public void mapTest" + partNum + "(){");
+				contents.add("  public void mapTest" + partNum + "() throws IOException{");
 				
 				ArrayList<TestMethod> executionMethodLists = executionPart.getMethodLists();
 				for(int methodNum = 0; methodNum < executionMethodLists.size(); methodNum++) {
 					TestMethod executionMethod = executionMethodLists.get(methodNum);
-					contents.add("      " + executionMethod.getStatement());
+					contents.add("" + executionMethod.getStatement());
 				}
 				
 				ArrayList<String> assertionTargetLists = executionPart.getAssertionTarget();
@@ -289,64 +290,82 @@ public class NaturalTestGenerator {
 				Test test = executionPart.getTest();
 				ArrayList<TestAssertion> assertionLists = test.getAssertionLists();
 				
-				int targetNum = 0;
-				for(int assertNum = 0; assertNum < assertionLists.size(); assertNum++) {
-					TestAssertion testAssertion = assertionLists.get(assertNum);
-					if(testAssertion.getAssertMethodName().equals("assertEquals")) {
-						String assertionValue = assertionValueLists.get(targetNum);
-						String assertionTarget = assertionTargetLists.get(targetNum);
-						String statement = "      assertEquals(";
-						
-						if(!testAssertion.getVariable().equals("")) {
-							if(testAssertion.getAssertionTargetMethod().getAnalyzerMethod().getReturnValueType().equals("String")){
-								statement += "\"" + assertionValue + "\"" + ", " + assertionTarget + ");";
-							}else {
-								statement += assertionValue + ", " + assertionTarget + ");";
-							}
+				if(assertionValueLists.size() > 0) {
+					int targetNum = 0;
+					for(int assertNum = 0; assertNum < assertionLists.size(); assertNum++) {
+						TestAssertion testAssertion = assertionLists.get(assertNum);
+						if(testAssertion.getAssertMethodName().equals("assertEquals") && (testAssertion.getVariable().equals("") || (testAssertion.getAssertionTargetMethod() != null && testAssertion.getAssertionTargetMethod().getAnalyzerMethod() != null))) {
+							String assertionValue = assertionValueLists.get(targetNum);
+							String assertionTarget = assertionTargetLists.get(targetNum);
+							String statement = "      assertEquals(";
 							
-							contents.add(statement);
-						}else {
-							String getterMethodInstance = testAssertion.getGetterMethodInstance();
-							String className = "";
-							for(int methodNum = 0; methodNum < executionMethodLists.size(); methodNum++) {
-								if(getterMethodInstance.equals(executionMethodLists.get(methodNum).getReturnVariable())) {
-									className = executionMethodLists.get(methodNum).getReturnType();
+							if(!testAssertion.getVariable().equals("")) {
+								if(testAssertion.getAssertionTargetMethod().getAnalyzerMethod().getReturnValueType().equals("String")){
+									statement += "\"" + assertionValue + "\"" + ", " + assertionTarget + ");";
+								}else {
+									statement += assertionValue + ", " + assertionTarget + ");";
 								}
-							}
-							
-							AnalyzerMethod analyzerMethod = null;
-							ArrayList<AnalyzerMethod> analyzerMethodLists = analyzer.getMethodLists();
-							for(int analyzeNum = 0; analyzeNum < analyzerMethodLists.size(); analyzeNum++) {
-								AnalyzerMethod targetMethod = analyzerMethodLists.get(analyzeNum);
-//								System.out.println("========");
-//								System.out.println(targetMethod.getOwnerClass().getName());
-//								System.out.println(className);
-//								System.out.println(targetMethod.getName());
-//								System.out.println(testAssertion.getGetterMethodName());
 								
-								if(targetMethod.getOwnerClass().getName().equals(className) && targetMethod.getName().equals(testAssertion.getGetterMethodName())) {
-									analyzerMethod = targetMethod;
-									break;
+								contents.add(statement);
+							}else {
+								String getterMethodInstance = testAssertion.getGetterMethodInstance();
+								String className = "";
+								for(int methodNum = 0; methodNum < executionMethodLists.size(); methodNum++) {
+									if(getterMethodInstance.equals(executionMethodLists.get(methodNum).getReturnVariable())) {
+										className = executionMethodLists.get(methodNum).getReturnType();
+									}
+								}
+								
+								AnalyzerMethod analyzerMethod = null;
+								ArrayList<AnalyzerMethod> analyzerMethodLists = analyzer.getMethodLists();
+								for(int analyzeNum = 0; analyzeNum < analyzerMethodLists.size(); analyzeNum++) {
+									AnalyzerMethod targetMethod = analyzerMethodLists.get(analyzeNum);
+//									System.out.println("========");
+//									System.out.println(targetMethod.getOwnerClass().getName());
+//									System.out.println(className);
+//									System.out.println(targetMethod.getName());
+//									System.out.println(testAssertion.getGetterMethodName());
+									
+									if(targetMethod.getOwnerClass() != null && targetMethod.getOwnerClass().getName().equals(className) && targetMethod.getName().equals(testAssertion.getGetterMethodName())) {
+										analyzerMethod = targetMethod;
+										break;
+									}
+								}
+								
+								if(analyzerMethod != null && analyzerMethod.getReturnValueType().equals("String")) {
+									statement += "\"" + assertionValue + "\"" + ", " + assertionTarget + ");";
+									contents.add(statement);
+								}else if(analyzerMethod != null){
+									statement += assertionValue + ", " + assertionTarget + ");";
+									contents.add(statement);
 								}
 							}
 							
-							if(analyzerMethod != null && analyzerMethod.getReturnValueType().equals("String")) {
-								statement += "\"" + assertionValue + "\"" + ", " + assertionTarget + ");";
-							}else {
-								statement += assertionValue + ", " + assertionTarget + ");";
-							}
+							targetNum += 1;
 							
-							contents.add(statement);
+						}else if((testAssertion.getAssertMethodName().equals("assertTrue") || testAssertion.getAssertMethodName().equals("assertFalse")) && (testAssertion.getVariable().equals("") || (testAssertion.getAssertionTargetMethod() != null && testAssertion.getAssertionTargetMethod().getAnalyzerMethod() != null))){
+							String assertionValue = assertionValueLists.get(targetNum);
+							String assertionTarget = assertionTargetLists.get(targetNum);
+							String statement = "      ";
+							if(assertionValue.equals("true")) {
+								statement += "assertTrue(";
+								statement += assertionTarget + ");";
+								contents.add(statement);
+							}else if(assertionValue.equals("true")){
+								statement += "assertFalse(";
+								statement += assertionTarget + ");";
+								contents.add(statement);
+							}
+
+							targetNum += 1;
+							
+						}else {
+							contents.add(testAssertion.getStatement());
 						}
 						
-						targetNum += 1;
-						
-					}else {
-						contents.add(testAssertion.getStatement());
 					}
-					
 				}
-				
+
 				contents.add("  }");
 			}
 			

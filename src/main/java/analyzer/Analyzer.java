@@ -107,57 +107,63 @@ public class Analyzer {
 					}
 					
 					// method or variable の生成
-					if(splitReadLine.size() > 1) {
+					if(splitReadLine.size() > 1 ) {
 						
 						if((accessModifier = this.isAccessModifier(splitReadLine.get(0))) != null ) {
 							if(splitReadLine.get(1).equals("class")) {
 								ownerClass = new Class(accessModifier, splitReadLine.get(2), packageName);
+
+								
+							}else if(splitReadLine.size() > 2 && splitReadLine.get(1).equals("final") && splitReadLine.get(2).equals("class")) {
+								ownerClass = new Class(accessModifier, splitReadLine.get(3), packageName);
 								
 							}
 							
-							if((methodOrFieldModifier = this.isMethodOrFieldModiferLists(splitReadLine.get(1))) != null) {
-								type = splitReadLine.get(2);
-								name = splitReadLine.get(3);
-								
-								method = this.createMethodOrVariable(ownerClass, accessModifier, methodOrFieldModifier, type, name, splitBracket[1]);
-								
-							}else if((methodModifier = this.isMethodModiferLists(splitReadLine.get(1))) != null) {
-								type = splitReadLine.get(2);
-								name = splitReadLine.get(3);
-								
-								method = this.createMethod(ownerClass, accessModifier, methodModifier, type, name, splitBracket[1]);
-								
-							}else if((fieldModifier = this.isFieldModiferLists(splitReadLine.get(1))) != null) {
-								type = splitReadLine.get(2);
-								name = splitReadLine.get(3);
-								
-								this.createVariable(ownerClass, accessModifier, fieldModifier, type, name);
-								
-							}else {
-								if(splitReadLine.size() == 2) {									
-									this.createMethod(ownerClass, accessModifier, methodOrFieldModifier, splitReadLine.get(1), "<init>", splitBracket[1]);
-								}else {
-									type = splitReadLine.get(1);
-									name = splitReadLine.get(2);
+							if(ownerClass != null) {
+								if((methodOrFieldModifier = this.isMethodOrFieldModiferLists(splitReadLine.get(1))) != null && splitBracket.length > 1) {
+									type = splitReadLine.get(2);
+									name = splitReadLine.get(3);
 									
-									if(!type.contains("(") && !type.equals("class")) {
-										if(readLine.contains("=")) {
-											this.createVariable(ownerClass, accessModifier, methodOrFieldModifier, type, name);
-										}else if(splitBracket.length > 1) {
-											method = this.createMethodOrVariable(ownerClass, accessModifier, null, type, name, splitBracket[1]);
-										}else {
-											method = this.createMethodOrVariable(ownerClass, accessModifier, null, type, name, "");
-										}
+									method = this.createMethodOrVariable(ownerClass, accessModifier, methodOrFieldModifier, type, name, splitBracket[1]);
+									
+								}else if((methodModifier = this.isMethodModiferLists(splitReadLine.get(1))) != null && splitBracket.length > 1) {
+									type = splitReadLine.get(2);
+									name = splitReadLine.get(3);
+									
+									method = this.createMethod(ownerClass, accessModifier, methodModifier, type, name, splitBracket[1]);
+									
+								}else if((fieldModifier = this.isFieldModiferLists(splitReadLine.get(1))) != null) {
+									type = splitReadLine.get(2);
+									name = splitReadLine.get(3);
+									
+									this.createVariable(ownerClass, accessModifier, fieldModifier, type, name);
+									
+								}else {
+									if(splitReadLine.size() == 2&& splitBracket.length > 1) {									
+										this.createMethod(ownerClass, accessModifier, methodOrFieldModifier, splitReadLine.get(1), "<init>", splitBracket[1]);
+									}else {
+										type = splitReadLine.get(1);
+										name = splitReadLine.get(2);
 										
+										if(!type.contains("(") && !type.equals("class")) {
+											if(readLine.contains("=")) {
+												this.createVariable(ownerClass, accessModifier, methodOrFieldModifier, type, name);
+											}else if(splitBracket.length > 1) {
+												method = this.createMethodOrVariable(ownerClass, accessModifier, null, type, name, splitBracket[1]);
+											}else {
+												method = this.createMethodOrVariable(ownerClass, accessModifier, null, type, name, "");
+											}
+											
+										}
 									}
+									
 								}
-								
 							}
 						}
 						
 						// getter の特定
 						if(method != null) {
-							if(method.getName().contains("get")) {
+							if(method.getName().length() > 3 && method.getName().substring(0, 3).equals("get") && !method.getName().equals("get")) {
 								String getterMethodName = method.getName();
 								getterMethodName = getterMethodName.replace("get", "");
 								getterMethodName = getterMethodName.split("\\(", 1)[0];
@@ -169,7 +175,7 @@ public class Analyzer {
 										break;
 									}
 								}
-							}else if(method.getName().contains("set")) {
+							}else if(method.getName().length() > 3 && method.getName().substring(0, 3).equals("set") && !method.getName().equals("set")) {
 								String setterMethodName = method.getName();
 								setterMethodName = setterMethodName.replace("set", "");
 								setterMethodName = setterMethodName.split("\\(", 1)[0];
@@ -281,7 +287,7 @@ public class Analyzer {
 			if(!argumentSplit[0].equals("")) {
 				for(int i = 0; i < argumentSplit.length; i++) {
 					String splitSpace[] = argumentSplit[i].split(" +");
-					if(splitSpace[0].equals("")) {
+					if(splitSpace[0].equals("") && splitSpace.length > 2) {
 						splitSpace[0] = splitSpace[1];
 						splitSpace[1] = splitSpace[2];
 					}	

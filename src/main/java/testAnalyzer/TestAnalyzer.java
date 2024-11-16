@@ -36,6 +36,11 @@ public class TestAnalyzer {
 					ArrayList<String> argumentTypeLists = new ArrayList<String>();
 					for(int argNum = 0; argNum < testMethod.getArgumentLists().size(); argNum++) {
 						argumentTypeLists.add(this.gudgeVariableType(testMethod.getArgumentLists().get(argNum), testTest.getMethodLists()));
+//						System.out.println("+++++++++++");
+//						System.out.println(testMethod.getArgumentLists().get(argNum));
+//						System.out.println(testMethod.getArgumentLists());
+//						System.out.println(this.gudgeVariableType(testMethod.getArgumentLists().get(argNum), testTest.getMethodLists()));
+//						System.out.println("-----------");
 					}
 					
 					ArrayList<AnalyzerMethod> sameMethodNameLists = new ArrayList<AnalyzerMethod>();
@@ -74,11 +79,14 @@ public class TestAnalyzer {
 								boolean sameMethodFlag = true;
 								for(int argNum = 0; argNum < argumentTypeLists.size(); argNum++) {
 									if(!tmpAnalyzerMethod.getTypeArgumentLists().get(argNum).equals(argumentTypeLists.get(argNum))) {
+//										System.out.println(tmpAnalyzerMethod.getTypeArgumentLists().get(argNum));
+//										System.out.println(argumentTypeLists.get(argNum));
 										sameMethodFlag = false;
 										break;
 									}
 								}
 								
+//								System.out.println(sameMethodFlag);
 								if(sameMethodFlag ) {
 									testMethod.setAnalyzerMethod(tmpAnalyzerMethod);
 									break;
@@ -164,6 +172,18 @@ public class TestAnalyzer {
 		}
 	}
 	
+	private int countDoubleQuote(String input) {
+		int count = 0;
+		String[] split = input.split("");
+		for(int i = 0; i < split.length; i++) {
+			if(split[i].equals("\"")) {
+				count += 1;
+			}
+		}
+		
+		return count;
+	}
+	
 	private void analyzetestClass(ArrayList<TestClass> testClassLists) {
 		for(int classNum = 0; classNum < testClassLists.size(); classNum++) {
 			TestClass testClass = testClassLists.get(classNum);
@@ -183,21 +203,31 @@ public class TestAnalyzer {
 							assertion = assertion.replace("assertEquals(", "");
 							assertion = assertion.replace(");", "");
 							
+//							String getter = "";
+//							String[] x = assertion.split(",", 2);
+//							if(x.length > 1) {
+//								getter = x[1];
+//							}
 							String[] splitAssertionArgument = assertion.split(",");
 							splitAssertionArgument[0] = splitAssertionArgument[0].replace("(", "");
 							splitAssertionArgument[0] = splitAssertionArgument[0].replace(")", "");
 							TestAssertion testAssertion;
 							String target = splitAssertionArgument[1];
-							int i = 1;
-							while(target.contains("\"") && (i + 1) < splitAssertionArgument.length) {
-								i += 1;
-								target = splitAssertionArgument[i];
+							if(this.countDoubleQuote(splitAssertionArgument[0]) == 1 || (splitAssertionArgument[0].length() > 1 && splitAssertionArgument[0].substring(0, 1).equals("\"") && !splitAssertionArgument[0].substring(splitAssertionArgument[0].length() - 1, splitAssertionArgument[0].length()).equals("\""))) {
+								int i = 1;
+								while(i + 1 < splitAssertionArgument.length && !splitAssertionArgument[i].contains("\"")) {
+									splitAssertionArgument[0] += "," + splitAssertionArgument[i];
+									i += 1;
+								}
+								splitAssertionArgument[0] += splitAssertionArgument[i];
+								target = splitAssertionArgument[i + 1];
 							}
 							
 							if(target.contains(".")) {
-								testAssertion = new TestAssertion(splitAssertionArgument[0], "", target, body.get(bodyNum), "assertEquals", bodyNum);
+
+								testAssertion = new TestAssertion(splitAssertionArgument[0], "", target, body.get(bodyNum), "assertEquals", bodyNum, target);
 							}else {
-								testAssertion = new TestAssertion(splitAssertionArgument[0], target, "", body.get(bodyNum), "assertEquals", bodyNum);
+								testAssertion = new TestAssertion(splitAssertionArgument[0], target, "", body.get(bodyNum), "assertEquals", bodyNum, "");
 							}
 							
 							testTest.addAssertionLists(testAssertion);
@@ -211,6 +241,7 @@ public class TestAnalyzer {
 							String variable = "";
 							String getterMethodInstance = "";
 							String getterMethodName = "";
+							String getter = "";
 							ArrayList<String> getterMethodArgument = new ArrayList<String>();
 							TestMethod assertionTargetMethod = null;
 							String statement = body.get(bodyNum);
@@ -220,10 +251,11 @@ public class TestAnalyzer {
 							if(assertion.contains(".")) {
 								String[] split = assertion.split(Pattern.quote("."));
 								getterMethodInstance = split[0];
-								String[] splitBrackets = split[1].split("[()]");
+								String[] splitBrackets = split[1].split("[()]", 2);
 								getterMethodName = splitBrackets[0];
-								if(splitBrackets.length > 1) {
-									String arguments = splitBrackets[1];
+								getter = assertion;
+								if(splitBrackets.length > 1 && !splitBrackets[1].substring(0, splitBrackets[1].length() - 1).equals("")) {
+									String arguments = splitBrackets[1].substring(0, splitBrackets[1].length() - 1);
 									String[] splitComna = arguments.split("[ ,]");
 									for(int i = 0; i < splitComna.length; i++) {
 										getterMethodArgument.add(splitComna[i]);
@@ -240,7 +272,7 @@ public class TestAnalyzer {
 									}
 								}
 							}
-							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getterMethodArgument, assertionTargetMethod, statement, assertMethodName, lineNum);
+							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getter, assertionTargetMethod, statement, assertMethodName, lineNum);
 							
 							testTest.addAssertionLists(testAssertion);
 							
@@ -258,15 +290,17 @@ public class TestAnalyzer {
 							TestMethod assertionTargetMethod = null;
 							String statement = body.get(bodyNum);
 							String assertMethodName = "assertTrue";
+							String getter = "";
 							int lineNum = bodyNum;
 							
 							if(assertion.contains(".")) {
 								String[] split = assertion.split(Pattern.quote("."));
 								getterMethodInstance = split[0];
-								String[] splitBrackets = split[1].split("[()]");
+								String[] splitBrackets = split[1].split("[()]", 2);
 								getterMethodName = splitBrackets[0];
-								if(splitBrackets.length > 1) {
-									String arguments = splitBrackets[1];
+								getter = assertion;
+								if(splitBrackets.length > 1 && !splitBrackets[1].substring(0, splitBrackets[1].length() - 1).equals("")) {
+									String arguments = splitBrackets[1].substring(0, splitBrackets[1].length() - 1);
 									String[] splitComna = arguments.split("[ ,]");
 									for(int i = 0; i < splitComna.length; i++) {
 										getterMethodArgument.add(splitComna[i]);
@@ -283,7 +317,7 @@ public class TestAnalyzer {
 									}
 								}
 							}
-							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getterMethodArgument, assertionTargetMethod, statement, assertMethodName, lineNum);
+							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getter, assertionTargetMethod, statement, assertMethodName, lineNum);
 							
 							testTest.addAssertionLists(testAssertion);
 						}else if(splitSpace[1].equals("assertFalse")) {
@@ -300,15 +334,17 @@ public class TestAnalyzer {
 							TestMethod assertionTargetMethod = null;
 							String statement = body.get(bodyNum);
 							String assertMethodName = "assertFalse";
+							String getter = "";
 							int lineNum = bodyNum;
 							
 							if(assertion.contains(".")) {
 								String[] split = assertion.split(Pattern.quote("."));
+								getter = assertion;
 								getterMethodInstance = split[0];
-								String[] splitBrackets = split[1].split("[()]");
+								String[] splitBrackets = split[1].split("[()]", 2);
 								getterMethodName = splitBrackets[0];
-								if(splitBrackets.length > 1) {
-									String arguments = splitBrackets[1];
+								if(splitBrackets.length > 1 && !splitBrackets[1].substring(0, splitBrackets[1].length() - 1).equals("")) {
+									String arguments = splitBrackets[1].substring(0, splitBrackets[1].length() - 1);
 									String[] splitComna = arguments.split("[ ,]");
 									for(int i = 0; i < splitComna.length; i++) {
 										getterMethodArgument.add(splitComna[i]);
@@ -325,7 +361,7 @@ public class TestAnalyzer {
 									}
 								}
 							}
-							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getterMethodArgument, assertionTargetMethod, statement, assertMethodName, lineNum);
+							TestAssertion testAssertion = new TestAssertion(value, variable, getterMethodInstance, getterMethodName, getter, assertionTargetMethod, statement, assertMethodName, lineNum);
 							
 							testTest.addAssertionLists(testAssertion);
 						}else if(!splitSpace[1].equals("}") && !splitSpace[1].equals("try") && !splitSpace[1].equals("//")){
@@ -340,6 +376,9 @@ public class TestAnalyzer {
 							TestMethod testMethod = new TestMethod(body.get(bodyNum), "catch", bodyNum, "", "");
 							testTest.addMethodLists(testMethod);
 							
+						}else if(splitSpace[1].equals("}") && body.get(bodyNum).substring(2, 3).equals(" ")) {
+							TestMethod testMethod = new TestMethod(body.get(bodyNum), "}", bodyNum, "", "");
+							testTest.addMethodLists(testMethod);
 						}
 					}
 				}
@@ -384,7 +423,7 @@ public class TestAnalyzer {
 								importLists.add(testImport);
 								
 							}else if(splitSpace[0].equals("public")) {
-								testClass = new TestClass(splitSpace[2], packageName, importLists);
+								testClass = new TestClass(splitSpace[2].replace("{", ""), packageName, importLists);
 								testClassLists.add(testClass);
 								
 							}else {

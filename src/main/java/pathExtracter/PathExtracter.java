@@ -22,6 +22,7 @@ public class PathExtracter {
 		
 		// Extract test Path
 		this.testTestPathExtract(inputTraceFileNameLists, testClassLists);
+//		System.out.println("aiueo");
 		this.separateInstance(inputFileNameLists, testClassLists);
 		
 		return testClassLists;
@@ -48,10 +49,12 @@ public class PathExtracter {
 					TestMethod testMethod = methodLists.get(methodNum);
 					String methodReturnType = testMethod.getReturnType();
 					
+//					System.out.println("52");
+//					System.out.println(methodReturnType);
 					if(classNameLists.contains(methodReturnType)) {
 						InstanceMethodGroup instanceMethodGroup = new InstanceMethodGroup(methodReturnType, testMethod.getReturnVariable());
+						instanceMethodGroupLists.add(instanceMethodGroup);						
 						instanceMethodGroup.addMethodLists(testMethod);
-						instanceMethodGroupLists.add(instanceMethodGroup);
 					}else {
 						for(int groupNum = 0; groupNum < instanceMethodGroupLists.size(); groupNum++) {
 							InstanceMethodGroup instanceMethodGroup = instanceMethodGroupLists.get(groupNum);
@@ -86,8 +89,8 @@ public class PathExtracter {
 				TraceMethodBlock frontTraceMethodBlock = traceMethodBlockLists.get(j);
 				TraceMethodBlock backTraceMethodBlock = traceMethodBlockLists.get(j + 1);
 				
-				int frontSeqNum = frontTraceMethodBlock.getTraceLists().get(0).getSeqNum();
-				int backSeqNum = backTraceMethodBlock.getTraceLists().get(0).getSeqNum();
+				long frontSeqNum = frontTraceMethodBlock.getTraceLists().get(0).getSeqNum();
+				long backSeqNum = backTraceMethodBlock.getTraceLists().get(0).getSeqNum();
 				
 				if(frontSeqNum > backSeqNum) {
 					traceMethodBlockLists.set(j, backTraceMethodBlock);
@@ -113,6 +116,7 @@ public class PathExtracter {
 	
 	public void testTestPathExtract(ArrayList<String> inputTraceFileNameLists, ArrayList<TestClass> testClassLists) {
 		for(int inputFileNum = 0; inputFileNum < inputTraceFileNameLists.size(); inputFileNum++) {
+//			System.out.println(inputTraceFileNameLists.get(inputFileNum));
 			File file = new File(inputTraceFileNameLists.get(inputFileNum));
 			Lexer lexer = new Lexer(file);
 			ArrayList<Trace> traceLists = lexer.getTraceLists();
@@ -121,15 +125,23 @@ public class PathExtracter {
 			// detect testClass
 			TestClass testClass = null;
 			TraceMethodBlock firstTraceMethodBlock = null;
+//			System.out.println();
+//			System.out.println(inputTraceFileNameLists.get(inputFileNum));
 			for(int blockNum = 0; blockNum < traceMethodBlockLists.size(); blockNum++) {
+//				System.out.println(traceMethodBlockLists.get(blockNum).getTraceLists().get(0).getCname());
 				if(traceMethodBlockLists.get(blockNum).getTraceLists().get(0).getCname().contains("_ESTest")) {
 					firstTraceMethodBlock = traceMethodBlockLists.get(blockNum);
 				}
 			}
 			
+			if(firstTraceMethodBlock == null) {
+				continue;
+			}
+			
 			Trace firstTrace = firstTraceMethodBlock.getTraceLists().get(0);
+//			System.out.println(firstTrace.getCname());
 			for(int testClassNum = 0; testClassNum < testClassLists.size(); testClassNum++) {
-				// System.out.println(firstTrace.getCname());
+//				System.out.println(testClassLists.get(testClassNum).getClassName());
 				if(firstTrace.getCname().contains(testClassLists.get(testClassNum).getClassName())) {
 					testClass = testClassLists.get(testClassNum);
 				}
@@ -158,14 +170,16 @@ public class PathExtracter {
 			ArrayList<Test> testLists = testClass.getTestLists();
 			for(int i = 0; i < testLists.size(); i++) {
 				for(int j = 0; j < testLists.size() - 1; j++) {
-					int frontTestSeqNum = testLists.get(j).getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
-					int backTestSeqNum = testLists.get(j+1).getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
-					
-					if(frontTestSeqNum > backTestSeqNum) {
-						Test frontTest = testLists.get(j);
-						Test backTest = testLists.get(j+1);
-						testLists.set(j, backTest);
-						testLists.set(j+1, frontTest);
+					if(testLists.get(j).getTraceMethodBlock() != null && testLists.get(j+1).getTraceMethodBlock() != null) {
+						long frontTestSeqNum = testLists.get(j).getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
+						long backTestSeqNum = testLists.get(j+1).getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
+						
+						if(frontTestSeqNum > backTestSeqNum) {
+							Test frontTest = testLists.get(j);
+							Test backTest = testLists.get(j+1);
+							testLists.set(j, backTest);
+							testLists.set(j+1, frontTest);
+						}
 					}
 				}
 			}
@@ -175,14 +189,16 @@ public class PathExtracter {
 			// 2. test のメソッドの振り分け
 			for(int testNum = 0; testNum < testLists.size(); testNum++) {
 				Test test = testLists.get(testNum);
-				int firstSeqNum = test.getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
-				int lastSeqNum = test.getTraceMethodBlock().getTraceLists().get(test.getTraceMethodBlock().getTraceLists().size() - 1).getSeqNum();
-				
-				for(int blockNum = 0; blockNum < traceMethodBlockLists.size(); blockNum++) {
-					TraceMethodBlock traceMethodBlock = traceMethodBlockLists.get(blockNum);
-					int seqNum = traceMethodBlock.getTraceLists().get(0).getSeqNum();
-					if(firstSeqNum < seqNum && seqNum < lastSeqNum) {
-						test.addTraceMethodBlockLists(traceMethodBlock);
+				if(test.getTraceMethodBlock() != null) {
+					long firstSeqNum = test.getTraceMethodBlock().getTraceLists().get(0).getSeqNum();
+					long lastSeqNum = test.getTraceMethodBlock().getTraceLists().get(test.getTraceMethodBlock().getTraceLists().size() - 1).getSeqNum();
+					
+					for(int blockNum = 0; blockNum < traceMethodBlockLists.size(); blockNum++) {
+						TraceMethodBlock traceMethodBlock = traceMethodBlockLists.get(blockNum);
+						long seqNum = traceMethodBlock.getTraceLists().get(0).getSeqNum();
+						if(firstSeqNum < seqNum && seqNum < lastSeqNum) {
+							test.addTraceMethodBlockLists(traceMethodBlock);
+						}
 					}
 				}
 			}
@@ -231,13 +247,11 @@ public class PathExtracter {
 					TestMethod testMethod = methodLists.get(methodNum);
 					String methodName = testMethod.getMethodName();
 					String ownerClass = "";
-					if(testMethod.getAnalyzerMethod() != null) {
+					if(testMethod.getAnalyzerMethod() != null && testMethod.getAnalyzerMethod().getOwnerClass() != null) {
 						ownerClass = testMethod.getAnalyzerMethod().getOwnerClass().getName();					
 					}else {
 						ownerClass = testMethod.getConstructorClass();
 					}
-					
-
 					
 					for(int blockNum = blockBorderNum; blockNum < blockLists.size(); blockNum++) {
 						Trace blockFirstTrace = blockLists.get(blockNum).getTraceLists().get(0);
@@ -256,11 +270,11 @@ public class PathExtracter {
 				for(int methodNum = 0; methodNum < methodLists.size(); methodNum++) {
 					TestMethod testMethod = methodLists.get(methodNum);
 					if(testMethod.getTraceMethodBlockLists().size() > 0) {
-						int firstSeqNum = testMethod.getTraceMethodBlockLists().get(0).getTraceLists().get(0).getSeqNum();
-						int lastSeqNum = testMethod.getTraceMethodBlockLists().get(0).getTraceLists().get(testMethod.getTraceMethodBlockLists().get(0).getTraceLists().size() - 1).getSeqNum();
+						long firstSeqNum = testMethod.getTraceMethodBlockLists().get(0).getTraceLists().get(0).getSeqNum();
+						long lastSeqNum = testMethod.getTraceMethodBlockLists().get(0).getTraceLists().get(testMethod.getTraceMethodBlockLists().get(0).getTraceLists().size() - 1).getSeqNum();
 					
 						for(int blockNum = 0; blockNum < blockLists.size(); blockNum++) {
-							int seqNum = blockLists.get(blockNum).getTraceLists().get(0).getSeqNum();
+							long seqNum = blockLists.get(blockNum).getTraceLists().get(0).getSeqNum();
 							if(firstSeqNum < seqNum && seqNum < lastSeqNum) {
 								testMethod.addTraceMethodBlockLists(blockLists.get(blockNum));
 							}else {
@@ -282,7 +296,8 @@ public class PathExtracter {
 //						System.out.println(
 //							traceMethodBlock.getTraceLists().get(0).getMname() + ":" + 
 //							traceMethodBlock.getTraceLists().get(0).getSeqNum() + ":" + 
-//							traceMethodBlock.getTraceLists().get(0).getCname());
+//							traceMethodBlock.getTraceLists().get(0).getCname()
+//						);
 //					}
 //					System.out.println();
 //				}

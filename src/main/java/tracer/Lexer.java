@@ -11,6 +11,7 @@ public class Lexer {
 	private ArrayList<Trace> traceLists = new ArrayList<Trace>();
 	private static String inputFileName = "src/main/resources/trace.json";
 	private String junitFileName = "junit-4.13.2.jar";
+	private String junitAddFileName = "junit-4.12.jar";
 	private String evoSuiteFileName = "evosuite-1.0.6.jar";
 	String[] assertMname = {"assertEquals", "assertNull", "assertTrue", "assertFalse"};
 	
@@ -78,7 +79,7 @@ public class Lexer {
 		try {
 			FileReader fr = new FileReader(inputFile);
 			BufferedReader br = new BufferedReader(fr);
-			String readLine = br.readLine();
+			String readLine;
 			
 			while((readLine = br.readLine()) != null) {
 				String[] sp = readLine.split("filename");
@@ -102,13 +103,13 @@ public class Lexer {
 //						}
 //					}
 					
-					if(!splitColon[splitColon.length - 1].equals(junitFileName) && !splitColon[splitColon.length - 1].equals(evoSuiteFileName)) {
+					if(!splitColon[splitColon.length - 1].equals(junitFileName) && !splitColon[splitColon.length - 1].equals(evoSuiteFileName) && !splitColon[splitColon.length - 1].equals(junitAddFileName)) {
 						
 						Trace trace = new Trace();
 						Attr attr = new Attr();
 						Value value = new Value();
 						
-						ArrayList<Integer> seqNumLists = new ArrayList<Integer>();
+						ArrayList<Long> seqNumLists = new ArrayList<Long>();
 						
 						readLine = trimDoubleQout(readLine);
 						readLine = readLine.substring(1, readLine.length()-1);
@@ -137,7 +138,7 @@ public class Lexer {
 								value.addValue(splitContent[0]);
 							}else if(mode == 3) {
 								splitContent[0] = trimBracket(splitContent[0]);
-								int tmpSeq = Integer.valueOf(splitContent[0]);
+								long tmpSeq = Long.valueOf(splitContent[0]);
 								seqNumLists.add(tmpSeq);
 							}
 							splitIndex += 1;
@@ -158,18 +159,18 @@ public class Lexer {
 								addTrace.setFilename(trace.getFilename());
 								addTrace.setCname(trace.getCname());
 								addTrace.setMname(trace.getMname());
-								addTrace.setMdesc(trace.getMdesc());
-								addTrace.setMhash(trace.getMhash());
+//								addTrace.setMdesc(trace.getMdesc());
+//								addTrace.setMhash(trace.getMhash());
 								addTrace.setLine(trace.getLine());
-								addTrace.setInst(trace.getInst());
+//								addTrace.setInst(trace.getInst());
 								addTrace.setEvent(trace.getEvent());
 								addTrace.setAttr(trace.getAttr());
 								addTrace.setValuetype(trace.getValuetype());
-								addTrace.setFreq(trace.getFreq());
-								addTrace.setRecord(trace.getRecord());
+//								addTrace.setFreq(trace.getFreq());
+//								addTrace.setRecord(trace.getRecord());
 								addTrace.setValueOption(valueOption);
 								addTrace.setSeqNum(seqNumLists.get(i));
-								addTrace.setThread(trace.getThread());
+//								addTrace.setThread(trace.getThread());
 								
 								
 								traceLists.add(addTrace);
@@ -187,7 +188,7 @@ public class Lexer {
 		this.sortTrace();
 	}
 	
-	private int traceMode0(String[] splitContent, Trace trace, Attr attr, Value value, ArrayList<Integer> seqNumLists) {
+	private int traceMode0(String[] splitContent, Trace trace, Attr attr, Value value, ArrayList<Long> seqNumLists) {
 		int mode = 0;
 		switch(splitContent[0]) {
 			case "loadedFrom":
@@ -203,16 +204,16 @@ public class Lexer {
 				trace.setMname(splitContent[1]);
 				break;
 			case "mdesc":
-				trace.setMdesc(splitContent[1]);
+//				trace.setMdesc(splitContent[1]);
 				break;
 			case "mhash":
-				trace.setMhash(splitContent[1]);
+//				trace.setMhash(splitContent[1]);
 				break;
 			case "line":
 				trace.setLine(Integer.parseInt(splitContent[1]));
 				break;
 			case "inst":
-				trace.setInst(Integer.parseInt(splitContent[1]));
+//				trace.setInst(Integer.parseInt(splitContent[1]));
 				break;
 			case "event":
 				trace.setEvent(splitContent[1]);
@@ -228,10 +229,10 @@ public class Lexer {
 				
 				break;
 			case "freq":
-				trace.setFreq(Integer.parseInt(splitContent[1]));
+//				trace.setFreq(Integer.parseInt(splitContent[1]));
 				break;
 			case "record":
-				trace.setRecord(Integer.parseInt(splitContent[1]));
+//				trace.setRecord(Integer.parseInt(splitContent[1]));
 				break;
 			case "value" :
 				mode = 2;
@@ -249,10 +250,10 @@ public class Lexer {
 			case "seqnum":
 				mode = 3;
 				splitContent[1] = trimBracket(splitContent[1]);
-				int tmpSeqNum = Integer.valueOf(splitContent[1]);
+				long tmpSeqNum = Long.valueOf(splitContent[1]);
 				seqNumLists.add(tmpSeqNum);
 			case "thread":
-				trace.setThread(splitContent[1]);
+//				trace.setThread(splitContent[1]);
 			default:
 				break;
 		}
@@ -260,7 +261,7 @@ public class Lexer {
 		return mode;
 	}
 	
-	private int traceMode1(String[] splitContent, Trace trace, Attr attr, ArrayList<Integer> seqNumLists) {
+	private int traceMode1(String[] splitContent, Trace trace, Attr attr, ArrayList<Long> seqNumLists) {
 		int mode = 1;
 		
 		switch(splitContent[0]) {
@@ -322,7 +323,7 @@ public class Lexer {
 		return mode;
 	}
 	
-	private int traceMode2(String[] splitContent, Trace trace, Value value, ArrayList<Integer> seqNumLists) {
+	private int traceMode2(String[] splitContent, Trace trace, Value value, ArrayList<Long> seqNumLists) {
 		int mode = 2;
 		
 		switch(splitContent[0]) {
@@ -341,12 +342,12 @@ public class Lexer {
 			case "seqnum":
 				mode = 3;
 				splitContent[1] = trimBracket(splitContent[1]);
-				int tmpSeqNum = Integer.valueOf(splitContent[1]);
+				long tmpSeqNum = Long.valueOf(splitContent[1]);
 				seqNumLists.add(tmpSeqNum);
 				break;
 			case "thread":
 				mode = 0;
-				trace.setThread(splitContent[1]);
+//				trace.setThread(splitContent[1]);
 				break;
 		}
 		
@@ -359,7 +360,7 @@ public class Lexer {
 		switch(splitContent[0]) {
 		case "thread":
 			mode = 0;
-			trace.setThread(splitContent[1]);
+//			trace.setThread(splitContent[1]);
 			break;
 		}
 		

@@ -10,7 +10,7 @@ import tracer.ValueOption;
 public class ExtractMethod {
 
 	private String methodName;
-	private int seqNum;
+	private long seqNum;
 	private ArrayList<ValueOption> argumentLists = new ArrayList<ValueOption>();
 	private ValueOption returnValueOption = null;
 	private AnalyzerMethod analyzerMethod;
@@ -39,7 +39,7 @@ public class ExtractMethod {
 		analyzerMethod = aM;
 	}
 	
-	public ExtractMethod(String s, AnalyzerMethod aM, int sN) {
+	public ExtractMethod(String s, AnalyzerMethod aM, long sN) {
 		methodName = s;
 		analyzerMethod = aM;
 		seqNum = sN;
@@ -65,7 +65,7 @@ public class ExtractMethod {
 		return methodName;
 	}
 	
-	public int getSeqNum() {
+	public long getSeqNum() {
 		return seqNum;
 	}
 	

@@ -58,20 +58,20 @@ public class Executer {
 		naturalTestGenerator.run(executionClassLists, resultLists, analyzer, extractClassLists);
 		
 		// 7. delete execution Test dir
-		executer.deleteExecutionTestDir();
+//		executer.deleteExecutionTestDir();
 	}
 	
-	private void deleteExecutionTestDir() {
-		File file = new File("src/main/java/executionTest");
-		File[] files = file.listFiles();
-         
-	    //存在するファイル数分ループして再帰的に削除
-	    for(int i=0; i<files.length; i++) {
-	    	files[i].delete();
-	    }
-         
-        file.delete();
-	}
+//	private void deleteExecutionTestDir() {
+//		File file = new File("src/main/java/executionTest");
+//		File[] files = file.listFiles();
+//         
+//	    //存在するファイル数分ループして再帰的に削除
+//	    for(int i=0; i<files.length; i++) {
+//	    	files[i].delete();
+//	    }
+//         
+//        file.delete();
+//	}
 	
 	public ArrayList<String> getInputFileNameLists(){
 		ArrayList<String> result = new ArrayList<String>();

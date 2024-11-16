@@ -29,7 +29,7 @@ import tracer.ValueOption;
 
 public class ExecutionPartGenerator {
 
-	private String executionTestPath = "src/main/java/executionTest/";
+	private String executionTestPath = "src/test/java/executionTest/";
 	
 	public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		ExecutionPartGenerator executionPartGenerator = new ExecutionPartGenerator();
@@ -43,6 +43,7 @@ public class ExecutionPartGenerator {
 		// 1. product code analyze
 		Analyzer analyzer = new Analyzer();
 		analyzer.run(inputFileNameLists);
+//		analyzer.displayMethodLists();
 		
 		// 2. evosuite test
 		PathExtracter pathExtracter = new PathExtracter();
@@ -54,6 +55,7 @@ public class ExecutionPartGenerator {
 		ArrayList<Trace> traceLists = lexer.getTraceLists();
 		ParamaterExtracter paramaterExtracter = new ParamaterExtracter();
 		ArrayList<ExtractClass> extractClassLists = paramaterExtracter.run(analyzer.getMethodLists(), analyzer.getVariableLists(), traceLists);
+		
 		
 		// 4. matching test
 		TestMatcher testMatcher = new TestMatcher();
@@ -131,13 +133,15 @@ public class ExecutionPartGenerator {
 			
 			contents.add("");
 			String instanceName = "execute" + executionClass.getClassName();
+			contents.add("          System.out.println(\"" + executionClass.getClassName() + "_ESTest\");");
 			contents.add("          fw.write(\"" + executionClass.getClassName() + "_EXTest\" + \"" + "\\" + "n\");");
 			contents.add("          " + executionClass.getClassName() + "_EXTest " + instanceName + " = new " + executionClass.getClassName() + "_EXTest();");
 			for(int methodNum = 0; methodNum < executionClass.getExecutionPartLists().size(); methodNum++) {
 				contents.add("          result = " + instanceName + ".test" + methodNum + "();");
 				contents.add("          fw.write(result.toString() + \"\\n\");");
+				contents.add("          System.out.print(\"" + methodNum + ", \");");
 			}
-			
+			contents.add("          System.out.println();");
 		}
 		
 		contents.add("          fw.close();");
@@ -193,11 +197,10 @@ public class ExecutionPartGenerator {
 			
 			ArrayList<TestImport> importLists = executionClass.getImportLists();
 			for(int importNum = 0; importNum < importLists.size(); importNum++) {
-				if(!importLists.get(importNum).getImportClass().contains("org")) {
-					contents.add(importLists.get(importNum).getStatement());
-				}
+				contents.add(importLists.get(importNum).getStatement());
 			}
 			contents.add("import java.util.ArrayList;");
+			contents.add("import java.io.IOException;");
 			
 			contents.add("");
 			contents.add("public class " + executionClass.getClassName() + "_EXTest {");
@@ -207,13 +210,13 @@ public class ExecutionPartGenerator {
 				ExecutionPart executionPart = executionPartLists.get(partNum);
 				
 				contents.add("");
-				contents.add("  public ArrayList<String> test" + partNum + "(){");
+				contents.add("  public ArrayList<String> test" + partNum + "() throws IOException {");
 				contents.add("      ArrayList<String> results = new ArrayList<String>();");
 				
 				ArrayList<TestMethod> executionMethodLists = executionPart.getMethodLists();
 				for(int methodNum = 0; methodNum < executionMethodLists.size(); methodNum++) {
 					TestMethod executionMethod = executionMethodLists.get(methodNum);
-					contents.add("      " + executionMethod.getStatement() + ";");
+					contents.add(executionMethod.getStatement());
 				}
 				
 				ArrayList<String> assertionTargetLists = executionPart.getAssertionTarget();
@@ -544,22 +547,7 @@ public class ExecutionPartGenerator {
 	
 	private String createAssertionTargetMethod(TestAssertion testAssertion) {
 		String targetAssertion = "";
-		targetAssertion += testAssertion.getGetterMethodInstance() + "." + testAssertion.getGetterMethodName() + "(";
-		
-		if(testAssertion.getGetterMethodArgument().size() == 0) {
-			targetAssertion += ")";
-		}else {
-			for(int argNum = 0; argNum < testAssertion.getGetterMethodArgument().size(); argNum++) {
-				targetAssertion += testAssertion.getGetterMethodArgument().get(argNum);
-				
-				if(argNum == testAssertion.getGetterMethodArgument().size() - 1) {
-					targetAssertion += ")";
-				}else {
-					targetAssertion += ", ";
-				}
-			}
-			
-		}
+		targetAssertion += testAssertion.getGetter();
 		
 		return targetAssertion;
 	}
@@ -585,6 +573,8 @@ public class ExecutionPartGenerator {
 				if(!valueOption.getValue().equals("")) {
 					statement += valueOption.getValue();
 				}else {
+//					extractMethod.display();
+//					method.display();
 					statement += method.getArgumentLists().get(argNum);
 				}
 				

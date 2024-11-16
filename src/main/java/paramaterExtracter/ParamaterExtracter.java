@@ -96,6 +96,8 @@ public class ParamaterExtracter {
 		boolean isConstructor = false;
 		
 		// extract params
+//		System.out.println(traceLists.size());
+		
 		for(int traceNum = 0; traceNum < traceLists.size(); traceNum++) {
 			Trace trace = traceLists.get(traceNum);
 			
@@ -127,7 +129,7 @@ public class ParamaterExtracter {
 						for(int analyzerNum = 0; analyzerNum < analyzerMethodLists.size(); analyzerNum++) {
 							AnalyzerMethod targetAnalyzerMethod = analyzerMethodLists.get(analyzerNum);
 							
-							if(callTrace.getAttr().getName().equals(targetAnalyzerMethod.getName()) && targetAnalyzerMethod.getOwnerClass().getName().equals(methodOwnerName)) {
+							if(callTrace.getAttr().getName().equals(targetAnalyzerMethod.getName()) && targetAnalyzerMethod.getOwnerClass() != null && targetAnalyzerMethod.getOwnerClass().getName().equals(methodOwnerName)) {
 								analyzerMethod = targetAnalyzerMethod;
 							}
 						}
@@ -141,10 +143,12 @@ public class ParamaterExtracter {
 							extractMethod.setReturnValueOption(trace.getValueOption());
 							
 							// add method to instance
-							String instanceId = callTrace.getValueOption().getId();
-							Instance instance = this.getInstanceFromId(instanceId, instanceLists);
-							if(instance != null) {
-								instance.addExtractMethodLists(extractMethod);
+							if(callTrace.getValueOption() != null) {
+								String instanceId = callTrace.getValueOption().getId();
+								Instance instance = this.getInstanceFromId(instanceId, instanceLists);
+								if(instance != null) {
+									instance.addExtractMethodLists(extractMethod);
+								}
 							}
 						}
 						
@@ -172,7 +176,7 @@ public class ParamaterExtracter {
 							String[] splitOwner = callTrace.getAttr().getOwner().split(Pattern.quote("."));
 							String methodOwnerName = splitOwner[splitOwner.length - 1];
 							
-							if(callTrace.getMname().equals(targetAnalyzerMethod.getName()) && targetAnalyzerMethod.getOwnerClass().getName().equals(methodOwnerName)) {
+							if(callTrace.getMname().equals(targetAnalyzerMethod.getName()) && targetAnalyzerMethod.getOwnerClass() != null && targetAnalyzerMethod.getOwnerClass().getName().equals(methodOwnerName)) {
 								analyzerMethod = targetAnalyzerMethod;
 							}
 						}
@@ -233,10 +237,18 @@ public class ParamaterExtracter {
 		ArrayList<TraceMethodBlock> traceMethodBlockLists = pathExtracter.getTraceMethodBlockLists(traceLists);
 		
 		for(int instanceNum = 0; instanceNum < instanceLists.size(); instanceNum++) {
+			if(instanceLists.get(instanceNum).getExtractMethodLists().size() == 0) {
+				instanceLists.remove(instanceNum);
+			}
+		}
+		
+		for(int instanceNum = 0; instanceNum < instanceLists.size(); instanceNum++) {
+//			instanceLists.get(instanceNum).display();
+			
 			for(int methodNum = 0; methodNum < instanceLists.get(instanceNum).getExtractMethodLists().size(); methodNum++) {
 				ExtractMethod extractMethod = instanceLists.get(instanceNum).getExtractMethodLists().get(methodNum);
 				int argSize = extractMethod.getArgmentLists().size();
-				int blockNum = extractMethod.getSeqNum() + argSize + 1;
+				long blockNum = extractMethod.getSeqNum() + argSize + 1;
 				
 				for(int methodBlockNum = 0; methodBlockNum < traceMethodBlockLists.size(); methodBlockNum++) {
 					if(traceMethodBlockLists.get(methodBlockNum).getTraceLists().get(0).getSeqNum() == blockNum) {
@@ -245,11 +257,11 @@ public class ParamaterExtracter {
 				}
 				
 				if(extractMethod.getTraceMethodBlock().size() > 0) {
-					int firstSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(0).getSeqNum();
-					int lastSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(extractMethod.getTraceMethodBlock().get(0).getTraceLists().size() - 1).getSeqNum();
+					long firstSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(0).getSeqNum();
+					long lastSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(extractMethod.getTraceMethodBlock().get(0).getTraceLists().size() - 1).getSeqNum();
 				
 					for(int methodBlockNum = 0; methodBlockNum < traceMethodBlockLists.size(); methodBlockNum++) {
-						int seqNum = traceMethodBlockLists.get(methodBlockNum).getTraceLists().get(0).getSeqNum();
+						long seqNum = traceMethodBlockLists.get(methodBlockNum).getTraceLists().get(0).getSeqNum();
 						if(firstSeqNum < seqNum && seqNum < lastSeqNum) {
 							extractMethod.addTraceMethodBlock(traceMethodBlockLists.get(methodBlockNum));
 						}
@@ -270,7 +282,7 @@ public class ParamaterExtracter {
 			
 			for(int instanceNum = 0; instanceNum < instanceLists.size(); instanceNum++) {
 				Instance instance = instanceLists.get(instanceNum);
-				if(instance.getOwnerClass().equals(className)) {
+				if(instance.getOwnerClass().equals(className) && instance.getExtractMethodLists().size() > 0) {
 					extractClass.addInstanceLists(instance);
 				}
 			}
@@ -292,8 +304,8 @@ public class ParamaterExtracter {
 				for(int index = 0; index < extractClass.getInstanceLists().size() - 1; index++) {
 					Instance frontInstance = extractClass.getInstanceLists().get(index);
 					Instance backInstance = extractClass.getInstanceLists().get(index + 1);
-					int frontSeqNum = frontInstance.getExtractMethodLists().get(0).getSeqNum();
-					int backSeqNum = backInstance.getExtractMethodLists().get(0).getSeqNum();
+					long frontSeqNum = frontInstance.getExtractMethodLists().get(0).getSeqNum();
+					long backSeqNum = backInstance.getExtractMethodLists().get(0).getSeqNum();
 					
 					if(frontSeqNum > backSeqNum) {
 						extractClass.getInstanceLists().set(index, backInstance);
@@ -308,15 +320,17 @@ public class ParamaterExtracter {
 				
 				for(int methodNum = 0; methodNum < methodLists.size(); methodNum++) {
 					ExtractMethod extractMethod = methodLists.get(methodNum);
-					targetInstance.addTraceMethodBlockLists(extractMethod.getTraceMethodBlock().get(0));
-					int topSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(0).getSeqNum();
-					int backSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(extractMethod.getTraceMethodBlock().get(0).getTraceLists().size() - 1).getSeqNum();
-					
-					for(int blockNum = 0; blockNum < traceMethodBlockLists.size(); blockNum++) {
-						TraceMethodBlock targetTraceMethodBlock = traceMethodBlockLists.get(blockNum);
-						int targetSeqNum = targetTraceMethodBlock.getTraceLists().get(0).getSeqNum();
-						if(topSeqNum < targetSeqNum && targetSeqNum < backSeqNum) {
-							targetInstance.addTraceMethodBlockLists(targetTraceMethodBlock);
+					if(extractMethod.getTraceMethodBlock().size() > 0) {
+						targetInstance.addTraceMethodBlockLists(extractMethod.getTraceMethodBlock().get(0));
+						long topSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(0).getSeqNum();
+						long backSeqNum = extractMethod.getTraceMethodBlock().get(0).getTraceLists().get(extractMethod.getTraceMethodBlock().get(0).getTraceLists().size() - 1).getSeqNum();
+						
+						for(int blockNum = 0; blockNum < traceMethodBlockLists.size(); blockNum++) {
+							TraceMethodBlock targetTraceMethodBlock = traceMethodBlockLists.get(blockNum);
+							long targetSeqNum = targetTraceMethodBlock.getTraceLists().get(0).getSeqNum();
+							if(topSeqNum < targetSeqNum && targetSeqNum < backSeqNum) {
+								targetInstance.addTraceMethodBlockLists(targetTraceMethodBlock);
+							}
 						}
 					}
 				}

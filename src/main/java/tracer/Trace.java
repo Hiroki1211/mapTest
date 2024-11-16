@@ -6,27 +6,27 @@ public class Trace {
 	private String filename;
 	private String cname;
 	private String mname;
-	private String mdesc;
-	private String mhash;
+//	private String mdesc;
+//	private String mhash;
 	private int line;
-	private int inst;
+//	private int inst;
 	private String event;
 	private Attr attr = new Attr();
 	private String valuetype;
-	private int freq;
-	private int record;
+//	private int freq;
+//	private int record;
 	private ValueOption valueOption = null;
-	private int seqNum;
-	private String thread;
+	private long seqNum;
+//	private String thread;
 	
 	public void displayContent() {
-		System.out.println("loadedFrom:" + loadedFrom + ", " + "filename:" + filename + ", " + "cname:" + cname + ", " + "mname:" + mname + ", " + "mdesc:" + mdesc + ", " + "mhash:" + mhash + ", " + "line:" + line + ", " + "inst:" + inst + ", " + "event:" + event + ", ");
+		System.out.println("loadedFrom:" + ", " + "filename:" + filename + ", " + "cname:" + cname + ", " + "mname:" + mname + ", " + "mdesc:" + ", " + "mhash:" + ", " + "line:" + line + ", " + "inst:" + ", " + "event:" + event + ", ");
 		attr.displayContent();
-		System.out.println("valuetype:" + valuetype + ", " + "freq:" + freq + ", " + "record:" + record + ", " );
+		System.out.println("valuetype:" + valuetype + ", " + "freq:" + ", " + "record:" + ", " );
 		if(valueOption != null){
 			valueOption.display();
 		}
-		System.out.println("seqnum:" + seqNum + ", " + "thread:" + thread);
+		System.out.println("seqnum:" + seqNum + ", " + "thread:" );
 		System.out.println();
 	}
 
@@ -45,22 +45,22 @@ public class Trace {
 	public void setMname(String input) {
 		mname = input;
 	}
-	
-	public void setMdesc(String input) {
-		mdesc = input;
-	}
-	
-	public void setMhash(String input) {
-		mhash = input;
-	}
+//	
+//	public void setMdesc(String input) {
+//		mdesc = input;
+//	}
+//	
+//	public void setMhash(String input) {
+//		mhash = input;
+//	}
 	
 	public void setLine(int input) {
 		line = input;
 	}
-	
-	public void setInst(int input) {
-		inst = input;
-	}
+//	
+//	public void setInst(int input) {
+//		inst = input;
+//	}
 	
 	public void setEvent(String input) {
 		event = input;
@@ -73,27 +73,27 @@ public class Trace {
 	public void setValuetype(String input) {
 		valuetype = input;
 	}
-	
-	public void setFreq(int input) {
-		freq = input;
-	}
-	
-	public void setRecord(int input) {
-		record = input;
-	}
+//	
+//	public void setFreq(int input) {
+//		freq = input;
+//	}
+//	
+//	public void setRecord(int input) {
+//		record = input;
+//	}
 	
 	public void setValueOption(ValueOption input) {
 		valueOption = input;
 	}
 	
-	public void setSeqNum(int input) {
+	public void setSeqNum(long input) {
 		seqNum = input;
 	}
-	
-	public void setThread(String input) {
-		thread = input;
-	}
-	
+//	
+//	public void setThread(String input) {
+//		thread = input;
+//	}
+//	
 	public String getLoadedFrom() {
 		return loadedFrom;
 	}
@@ -109,22 +109,22 @@ public class Trace {
 	public String getMname() {
 		return mname;
 	}
-	
-	public String getMdesc() {
-		return mdesc;
-	}
-	
-	public String getMhash() {
-		return mhash;
-	}
+//	
+//	public String getMdesc() {
+//		return mdesc;
+//	}
+//	
+//	public String getMhash() {
+//		return mhash;
+//	}
 	
 	public int getLine() {
 		return line;
 	}
-	
-	public int getInst() {
-		return inst;
-	}
+//	
+//	public int getInst() {
+//		return inst;
+//	}
 	
 	public String getEvent() {
 		return event;
@@ -137,25 +137,25 @@ public class Trace {
 	public String getValuetype() {
 		return valuetype;
 	}
-	
-	public int getFreq() {
-		return freq;
-	}
-	
-	public int getRecord() {
-		return record;
-	}
+//	
+//	public int getFreq() {
+//		return freq;
+//	}
+//	
+//	public int getRecord() {
+//		return record;
+//	}
 	
 	public ValueOption getValueOption() {
 		return valueOption;
 	}
 	
-	public int getSeqNum() {
+	public long getSeqNum() {
 		return seqNum;
 	}
-	
-	public String getThread() {
-		return thread;
-}
+//	
+//	public String getThread() {
+//		return thread;
+//}
 	
 }

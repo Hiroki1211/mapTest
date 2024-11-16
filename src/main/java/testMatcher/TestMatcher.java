@@ -103,8 +103,20 @@ public class TestMatcher {
 						}
 					}
 					
+					ArrayList<TestMethod> testMethodLists = evoSuiteTest.getMethodLists();
+					boolean notContainTry = true;
+					for(int i = 0; i < testMethodLists.size(); i++) {
+						if(testMethodLists.get(i).getMethodName().equals("try")) {
+							notContainTry = false;
+							break;
+						}
+					}
+					
 					// 2. 全てのInstanceMethodGroupがマッチしているなら、成功
-					if(isMatch) {
+//					System.out.println(isMatch);
+//					System.out.println(notContainTry);
+//					System.out.println(instanceMethodGroupLists.size());
+					if(isMatch && notContainTry && instanceMethodGroupLists.size() > 0) {
 						MatchingResult matchingResult = new MatchingResult(sameExecutePath, matchingInstanceLists);
 						result.addMatchingResultLists(matchingResult);
 						
@@ -177,6 +189,14 @@ public class TestMatcher {
 		ArrayList<TraceMethodBlock> extractBlock = extractMethod.getTraceMethodBlock();
 		ArrayList<ExecutePath> evoSuiteExecutePathLists = this.createExecutePath(evoSuiteBlock, testMethod.getMethodName(), testClass);
 		ArrayList<ExecutePath> extractExecutePathLists = this.createExecutePath(extractBlock, extractMethod.getMethodName()	, extractClass);	
+		
+		if(testMethod.getArgumentLists().size() != extractMethod.getArgmentLists().size()) {
+			return false;
+		}
+		
+		if(!testMethod.getMethodName().equals(extractMethod.getMethodName())) {
+			return false;
+		}
 		
 		if(evoSuiteExecutePathLists.size() != extractExecutePathLists.size()) {
 			return false;
@@ -400,8 +420,8 @@ public class TestMatcher {
 						TraceMethodBlock frontTraceMethodBlock = traceMethodBlockLists.get(j);
 						TraceMethodBlock backTraceMethodBlock = traceMethodBlockLists.get(j + 1);
 						
-						int frontSeqNum = frontTraceMethodBlock.getTraceLists().get(0).getSeqNum();
-						int backSeqNum = backTraceMethodBlock.getTraceLists().get(0).getSeqNum();
+						long frontSeqNum = frontTraceMethodBlock.getTraceLists().get(0).getSeqNum();
+						long backSeqNum = backTraceMethodBlock.getTraceLists().get(0).getSeqNum();
 						
 						if(frontSeqNum > backSeqNum) {
 							traceMethodBlockLists.set(j, backTraceMethodBlock);
